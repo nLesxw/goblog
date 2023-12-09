@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+    _ "github.com/go-sql-driver/mysql" //匿名导入
 )
 
 var router = mux.NewRouter()
