@@ -47,7 +47,18 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprint(w, "创建新的文章")
+    err := r.ParseForm() //从请求中解析请求参数
+    if err != nil {
+        //解析错误
+        fmt.Fprint(w, "请提供正确的数据！")
+        return
+    }
+    title := r.PostForm.Get("title")
+    //r.Form和r.PostForm功能类似，多了URL参数里的数据
+    //如不想获取所有的请求内容，而是逐个获取的话，这也是比较常见的操作，无需使用 r.ParseForm() 可直接使用 r.FormValue() 和 r.PostFormValue() 方法
+    fmt.Fprintf(w, "POST PostForm: %v <br>", r.PostForm)
+    fmt.Fprintf(w, "POST Form: %v <br>", r.Form)
+    fmt.Fprintf(w, "title 的值为: %v", title)
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
