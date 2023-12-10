@@ -52,6 +52,17 @@ func checkError(err error){
     }
 }
 
+func createTables(){
+    createArticlesTale := `create table if not exists articles(
+        id bigint(20) primary key auto_increment not null,
+        title varchar(255) collate utf8mb4_unicode_ci not null,
+        body longtext collate utf8mb4_unicode_ci
+    );`
+
+    _, err := db.Exec(createArticlesTale)
+    checkError(err)
+}
+
 func homeHandler(w http.ResponseWriter, r *http.Request) {
     
     fmt.Fprint(w, "<h1>Hello, 欢迎来到 goblog！</h1>")
@@ -180,6 +191,7 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 
 func main() {
     initDB()
+    createTables()
 
     router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
     router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
