@@ -87,6 +87,15 @@ type Article struct {
     ID int64
 }
 
+func (a Article) Link() string {
+    showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
+    if err != nil {
+        checkError(err)
+        return ""
+    }
+    return showURL.String()
+}
+
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
     //1.获取 URL 参数
     id := getRouterVariable("id", r)
@@ -126,7 +135,33 @@ func forceHTMLMiddleware(next http.Handler) http.Handler {
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprint(w, "访问文章列表")
+    //1. 执行查询语句，返回结果集
+    rows, err := db.Query("select * from articles")
+    checkError(err)
+    defer rows.Close()
+
+    var articles []Article
+    //2. 循环读取结果
+    for rows.Next() {
+        var article Article
+        //2.1 扫描每一行的结果并赋值到一个 article 对象中
+        err := rows.Scan(&article.ID, &article.Title, &article.Body)
+        checkError(err)
+        //2.2 将article 追加到 articles 这个数组中
+        articles = append(articles, article)
+    }
+
+    //2.3 检查遍历时是否发生错误
+    err = rows.Err()
+    checkError(err)
+
+    //3. 加载模板
+    tmpl, err := template.ParseFiles("views/articles/index.gohtml")
+    checkError(err)
+
+    //4. 渲染模板，将所有文章的数据传输进去
+    err = tmpl.Execute(w, articles)
+    checkError(err)
 }
 
 //ArticlesFormData 创建博文表单数据
