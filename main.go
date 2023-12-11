@@ -1,6 +1,7 @@
 package main
 
 import (
+	"GoBlog/pkg/database"
 	"GoBlog/pkg/logger"
 	"GoBlog/pkg/route"
 	"GoBlog/pkg/types"
@@ -11,54 +12,13 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 	"unicode/utf8"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
-
 var router *mux.Router
 var db *sql.DB
-
-func initDB(){
-    var err error
-    config := mysql.Config{
-        User: "root",
-        Passwd: "123456",
-        Addr: "127.0.0.1:3306",
-        Net: "tcp",
-        DBName: "goblogNew",
-        AllowNativePasswords: true,
-    }
-
-    //准备数据库连接池
-    db, err = sql.Open("mysql", config.FormatDSN())
-   logger.LogError(err)
-
-    //设置最大的连接数
-    db.SetMaxOpenConns(25)
-    //设置最大的空闲连接数
-    db.SetMaxIdleConns(25)
-    //设置每个连接的过期时间
-    db.SetConnMaxLifetime(5 * time.Minute)
-
-    //尝试连接，失败则会报错
-    err = db.Ping()
-   logger.LogError(err)
-}
-
-func createTables(){
-    createArticlesTale := `create table if not exists articles(
-        id bigint(20) primary key auto_increment not null,
-        title varchar(255) collate utf8mb4_unicode_ci not null,
-        body longtext collate utf8mb4_unicode_ci
-    );`
-
-    _, err := db.Exec(createArticlesTale)
-   logger.LogError(err)
-}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
     
@@ -471,8 +431,8 @@ func (a Article) Delete() (rowAffected int64, err error){
 }
 
 func main() {
-    initDB()
-    createTables()
+    database.Initialize()
+    db = database.DB
 
     route.Initialize()
     router = route.Router
