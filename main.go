@@ -3,6 +3,7 @@ package main
 import (
 	"GoBlog/pkg/logger"
 	"GoBlog/pkg/route"
+	"GoBlog/pkg/types"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -116,7 +117,7 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
         tmpl, err := template.New("show.gohtml").Funcs(
             template.FuncMap{
                 "RouteName2URL" : route.Name2URL,
-                "Int64ToString": Int64ToString,
+                "Int64ToString": types.Int64ToString,
             }).ParseFiles("views/articles/show.gohtml")
        logger.LogError(err)
 
@@ -452,11 +453,6 @@ func articlesDeleteHandler(w http.ResponseWriter, r *http.Request) {
             }
         }
     }
-}
-
-//Int64ToString 将 int64 转换为 string
-func Int64ToString(num int64) string {
-    return strconv.FormatInt(num, 10)
 }
 
 func (a Article) Delete() (rowAffected int64, err error){
