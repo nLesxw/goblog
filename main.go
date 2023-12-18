@@ -1,6 +1,7 @@
 package main
 
 import (
+	"GoBlog/app/http/controllers"
 	"GoBlog/bootstrap"
 	"GoBlog/pkg/database"
 	"GoBlog/pkg/logger"
@@ -11,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"unicode/utf8"
 
 	"github.com/gorilla/mux"
 )
@@ -39,120 +39,6 @@ type ArticlesFormData struct {
     Title,Body string
     URL *url.URL
     Errors map[string]string
-}
-
-func validateArticleFromData(title string, body string) map[string]string {
-    errors := make(map[string]string)
-
-    //验证标题
-    if title == "" {
-        errors["title"] = "标题不能为空"
-    }else if utf8.RuneCountInString(title) < 3 || utf8.RuneCountInString(title) > 40 {
-        errors["title"] = "标题长度需 介于 3-40"
-    }
-
-    //验证内容
-    if body == "" {
-        errors["body"] = "内容不能为空"
-    }else if utf8.RuneCountInString(body) < 10 {
-        errors["body"] = "内容不能少于10个字节"
-    }
-
-    return errors
-}
-
-func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
-    
-    title := r.PostFormValue("title")
-    body := r.PostFormValue("body")
-
-    errors := validateArticleFromData(title, body)
-    
-    //检查是否出错
-    if len(errors) == 0 {
-        lastInsertID, err := saveArticleToDB(title, body)
-        if lastInsertID > 0 {
-            fmt.Fprint(w, "插入成功，ID为"+strconv.FormatInt(lastInsertID, 10))
-        }else {
-           logger.LogError(err)
-            w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprint(w, "500 服务器内部错误")
-        }
-    }else {
-
-        storeURL, _ := router.Get("articles.store").URL()
-        data := ArticlesFormData{
-            Title: title,
-            Body: body,
-            URL: storeURL,
-            Errors: errors,
-        }
-        tmpl, err := template.ParseFiles("views/articles/create.gohtml")
-        if err != nil {
-            panic(err)
-        }
-
-        err = tmpl.Execute(w, data)
-        if err != nil {
-            panic(err)
-        }
-    }
-}
-
-func saveArticleToDB(title string, body string) (int64, error){
-
-    //初始化变量
-    var (
-        id int64
-        err error
-        rs sql.Result
-        stmt *sql.Stmt
-    )
-
-    //1. 获取一个 prepare 声明语句
-    stmt, err = db.Prepare("insert into articles (title, body) values (?,?)")
-    //例行检查错误
-    if err != nil {
-        return 0, err
-    }
-
-    //2.在此函数运行结束后关闭此语句，防止占用SQL连接
-    defer stmt.Close()
-
-    //3. 执行请求，传参进入绑定的内容
-    rs, err = stmt.Exec(title, body)
-    if err != nil {
-        return 0, err
-    }
-
-    //4. 插入成功的话，会返回自增 ID
-    if id, err = rs.LastInsertId(); id > 0 {
-        return id, err
-    }
-
-    return 0, err
-}
-
-func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
-    
-    storeURL, _ := router.Get("articles.store").URL()
-
-    data := ArticlesFormData{
-        Title: "",
-        Body: "",
-        URL: storeURL,
-        Errors: nil,
-    }
-
-    tmpl, err := template.ParseFiles("views/articles/create.gohtml")
-    if err != nil {
-        panic(err)
-    }
-
-    err = tmpl.Execute(w, data)
-    if err != nil {
-        panic(err)
-    }
 }
 
 func removeTrailingSlash(next http.Handler) http.Handler {
@@ -239,7 +125,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r * http.Request) {
         title := r.PostFormValue("title")
         body := r.PostFormValue("body")
 
-        errors := validateArticleFromData(title, body)
+        errors := controllers.ValidateArticleFromData(title, body)
 
         if len(errors) == 0 {
 
@@ -351,9 +237,6 @@ func main() {
     bootstrap.SetupDB()
     router = bootstrap.SetupRoute()
 
-    
-    router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
-    router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
     router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesEditHandler).Methods("GET").Name("articles.edit")
     router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
     router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")
