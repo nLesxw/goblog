@@ -2,12 +2,13 @@ package model
 
 import (
 	"GoBlog/pkg/logger"
+	"GoBlog/pkg/types"
+
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 
 	//GORM 的 MySQL 数据库驱动导入
 	"gorm.io/driver/mysql"
-	
 )
 
 //DB gorm.DB对象
@@ -29,4 +30,14 @@ func ConnectDB() *gorm.DB {
 	logger.LogError(err)
 
 	return DB
+}
+
+// BaseModel 模型基类
+type BaseModel struct {
+	ID uint64
+}
+
+// GetStringID 获取ID的字符串格式
+func (b BaseModel) GetStringID() string{
+	return types.Uint64ToString(b.ID)
 }
