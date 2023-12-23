@@ -6,16 +6,14 @@ import (
 	"GoBlog/pkg/view"
 	"fmt"
 	"net/http"
-
 )
 
 //AuthController 处理用户认证
 type AuthController struct {
-
 }
 
 //Register 注册页面
-func (*AuthController) Register(w http.ResponseWriter, r *http.Request){
+func (*AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	view.RenderSimple(w, view.D{}, "auth.register")
 }
 
@@ -23,9 +21,9 @@ func (*AuthController) Register(w http.ResponseWriter, r *http.Request){
 func (*AuthController) DoRegister(w http.ResponseWriter, r *http.Request) {
 	//1. 初始化数据
 	_user := user.User{
-		Name: r.PostFormValue("name"),
-		Email: r.PostFormValue("email"),
-		Password: r.PostFormValue("password"),
+		Name:            r.PostFormValue("name"),
+		Email:           r.PostFormValue("email"),
+		Password:        r.PostFormValue("password"),
 		PasswordConfirm: r.PostFormValue("password_confirm"),
 	}
 
@@ -36,17 +34,27 @@ func (*AuthController) DoRegister(w http.ResponseWriter, r *http.Request) {
 		//3. 表单不通过——重新显示表单
 		view.RenderSimple(w, view.D{
 			"Errors": errs,
-			"User": _user,
+			"User":   _user,
 		}, "auth.register")
-	}else {
+	} else {
 		//4. 验证成功，创建数据
 		_user.Create()
 
 		if _user.ID > 0 {
 			http.Redirect(w, r, "/", http.StatusFound)
-		}else {
+		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "注册失败，请联系管理员")
 		}
 	}
+}
+
+//Login 显示登录菜单
+func (*AuthController) Login(w http.ResponseWriter, r *http.Request) {
+	view.RenderSimple(w, view.D{}, "auth.login")
+}
+
+//DoLogin 处理登录表单提交
+func (*AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
+	//
 }
