@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"GoBlog/app/requests"
+	"GoBlog/pkg/config"
 	"GoBlog/pkg/logger"
 	"GoBlog/pkg/model/article"
 	"GoBlog/pkg/route"
