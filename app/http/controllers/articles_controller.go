@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"GoBlog/app/requests"
+	"GoBlog/pkg/auth"
 	"GoBlog/pkg/logger"
 	"GoBlog/pkg/model/article"
 	"GoBlog/pkg/route"
@@ -9,7 +10,6 @@ import (
 	"GoBlog/policies"
 	"fmt"
 	"net/http"
-
 )
 
 // ArticlesController 处理静态页面
@@ -59,9 +59,11 @@ func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
 func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 	
     //1. 初始化数据
+    currentUser := auth.User()
     _article := article.Article {
         Title: r.PostFormValue("title"),
         Body: r.PostFormValue("body"),
+        UserID: currentUser.ID,
     }
 
     //2. 表单验证
