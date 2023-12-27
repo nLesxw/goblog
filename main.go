@@ -3,17 +3,14 @@ package main
 import (
 	"GoBlog/app/middlewares"
 	"GoBlog/bootstrap"
+	"GoBlog/config"
+	c "GoBlog/pkg/config"
 	"GoBlog/pkg/logger"
 	"net/http"
-	c "GoBlog/pkg/config"
-
-	"github.com/gorilla/mux"
 )
 
-var router *mux.Router
-
 func init() {
-	c.Initialize()
+	config.Initialize()
 }
 
 func main() {
@@ -21,7 +18,7 @@ func main() {
     bootstrap.SetupDB()
 
 	// 初始化路由绑定
-    router = bootstrap.SetupRoute()
+    router := bootstrap.SetupRoute()
 
     err := http.ListenAndServe(":"+c.GetString("app.port"), middlewares.RemoveTrailingSlash(router))
     logger.LogError(err)

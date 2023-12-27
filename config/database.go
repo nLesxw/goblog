@@ -9,9 +9,9 @@ func init() {
 			//数据库连接信息
 			"host": config.Env("DB_HOST", "127.0.0.1"),
 			"port": config.Env("DB_PORT", "3306"),
-			"database": config.Env("DB_DATABASE", "goblog"),
-			"username": config.Env("DB_USERNAME", ""),
-			"password": config.Env("DB_PASSWORD", ""),
+			"database": config.Env("DB_DATABASE", "goblognew"),
+			"username": config.Env("DB_USERNAME", "root"),
+			"password": config.Env("DB_PASSWORD", "123456"),
 			"charset": "utf8mb4",
 
 			//连接池配置
