@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"GoBlog/app/requests"
+	"GoBlog/pkg/flash"
 	"GoBlog/pkg/logger"
 	"GoBlog/pkg/model/article"
 	"GoBlog/pkg/route"
 	"GoBlog/pkg/view"
+	"GoBlog/policies"
 	"fmt"
 	"net/http"
 
@@ -39,7 +41,7 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request){
         }
     }else {
         //4. 读取成功,显示文章
-        view.Render(w, view.D{"Article": article},"articles.show", "articles._article_meta")
+        view.Render(w, view.D{"Article": article, "CanModifyArticle": policies.CanModifyArticle(article)},"articles.show", "articles._article_meta")
     }
 }
 
@@ -98,7 +100,7 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
+func (ac *ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 
     //1.获取参数
     id := route.GetRouteVariable("id", r)
@@ -119,15 +121,21 @@ func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
             fmt.Fprint(w, "500 服务器内部错误")
         }
     }else {
-        //4. 读取成功,显示编辑文章表单
-        view.Render(w, view.D{
+        //检查权限
+        if !policies.CanModifyArticle(_article) {
+            flash.Warning("未授权操作！！")
+            http.Redirect(w, r, "/", http.StatusFound)
+        }else {
+            //4. 读取成功,显示编辑文章表单
+            view.Render(w, view.D{
             "Article": _article,
             "Errors": view.D{},
         }, "articles.edit", "articles._form_field")     
+        }
     }
 }
 
-func (*ArticlesController) Update(w http.ResponseWriter, r * http.Request) {
+func (ac *ArticlesController) Update(w http.ResponseWriter, r * http.Request) {
     //1. 获取 URL 参数
     id := route.GetRouteVariable("id", r)
 
@@ -148,6 +156,12 @@ func (*ArticlesController) Update(w http.ResponseWriter, r * http.Request) {
         }
     }else {
         //4. 未出现错误
+
+        // 检查错误
+        if !policies.CanModifyArticle(_article) {
+            flash.Warning("未授权操作！！！")
+            http.Redirect(w, r, "/", http.StatusForbidden)
+        }else {
 
         //4.1 表单验证
         _article.Title = r.PostFormValue("title")
@@ -181,10 +195,11 @@ func (*ArticlesController) Update(w http.ResponseWriter, r * http.Request) {
                 "Errors": errors,
             }, "articles.edit", "articles._form_field")
         }
+        }
     }
 }
 
-func (*ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
+func (ac *ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
 	
     //1. 获取 URL 参数
     id := route.GetRouteVariable("id", r)
@@ -205,7 +220,13 @@ func (*ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
              fmt.Fprint(w, "500 服务器内部错误")
         }
     }else {
-        // 4. 未出现错误，执行删除操作
+        
+        //检查权限
+        if !policies.CanModifyArticle(_article) {
+            flash.Warning("没有权限执行此操作！！！")
+            http.Redirect(w, r, "/", http.StatusFound)
+        }else {
+            // 4. 未出现错误，执行删除操作
         rowsAffected, err := _article.Delete()
 
         // 4.1 发生错误
@@ -225,6 +246,7 @@ func (*ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
                 w.WriteHeader(http.StatusNotFound)
                 fmt.Fprint(w, "404 文章未找到")
             }
+        }
         }
     }
 }
